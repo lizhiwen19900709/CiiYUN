@@ -58,8 +58,8 @@ Automatic, periodic backups of CiiYUN  media, MongoDB, and Postgres can be indiv
 Backups can also be manually triggered when `CiiYUN` is running by executing the the following commands:
 ```
 docker exec -it CiiYUN_kobocat_1 /srv/src/kobocat/docker/backup_media.bash
-docker exec -it kobodocker_mongo_1 /srv/backup_mongo.bash
-docker exec -it kobodocker_postgres_1 /srv/backup_postgres.bash
+docker exec -it CiiYUN_mongo_1 /srv/backup_mongo.bash
+docker exec -it CiiYUN_postgres_1 /srv/backup_postgres.bash
 ```
 
 # Troubleshooting
