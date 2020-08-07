@@ -1,5 +1,5 @@
 # WARNING
-If you started running KoBo Toolbox using a version of `kobo-docker` from before to [2016.10.13](https://github.com/kobotoolbox/kobo-docker/commit/316b1464c86e2c447ca88c10d383662b4f2e4ac6), actions that recreate the `kobocat` container (including `docker-compose up ...` under some circumstances) will result in losing access to user media files (e.g. responses to photo questions). Safely stored media files can be found in `kobo-docker/.vols/kobocat_media_uploads/`.
+If you started running CiiYUN using a version of `CiiYUN ` from before to [2019.06.21](https://github.com/lizhiwen19900709/CiiYUN ), actions that recreate the `CiiYUN ` container (including `docker-compose up ...` under some circumstances) will result in losing access to user media files (e.g. responses to photo questions). Safely stored media files can be found in `CiiYUN/.vols/kobocat_media_uploads/`.
 
 Files that were not safely stored can be found inside Docker volumes as well as in your current and any previous `kobocat` containers. One quick way of finding these is directly searching the Docker root directory. The root directory can be found by running `docker info` and looking for the "Docker Root Dir" entry (not to be confused with the storage driver's plain "Root Dir").
 
@@ -7,20 +7,20 @@ Once this is noted, you can `docker-compose stop` and search for potentially-mis
 
 # kobo-docker
 
-`kobo-docker` is used to run a copy of the [KoBo Toolbox](http://www.kobotoolbox.org) survey data collection platform on a machine of your choosing. It relies on [Docker](https://docker.com) to separate the different parts of KoBo into different containers (which can be thought of as lighter-weight virtual machines) and [Docker Compose](https://docs.docker.com/compose/) to configure, run, and connect those containers. Below is a diagram (made with [Lucidchart](lucidchart.com)) of the containers that make up a running `kobo-docker` system and their connections:
+`CiiYUN` is used to run a copy of the [CiiYUN](http://www.guokc.com) survey data collection platform on a machine of your choosing. It relies on [Docker](https://docker.com) to separate the different parts of KoBo into different containers (which can be thought of as lighter-weight virtual machines) and [Docker Compose](https://docs.docker.com/compose/) to configure, run, and connect those containers. Below is a diagram (made with [Lucidchart](lucidchart.com)) of the containers that make up a running `CiiYUN ` system and their connections:
 ![Container diagram](./doc/Container_diagram.png)
 
 
 
 # Setup procedure:
 
-1. The first decision to make is whether your `kobo-docker` instance will use secure (**HTTPS**) or insecure (plain **HTTP**) communications when interacting with clients. While secure communications are obviously desirable, the requirements imposed by the public key cryptographic system underpinning HTTPS add a considerable degree of complexity to the initial setup (we are in the process of eventually simplifying this with [`letsencrypt`](https://letsencrypt.org/)). In contrast, setups using plain HTTP can be suitable in some cases where security threats are unlikely, such as for use strictly within a secure private network. To emphasize the difference between the two types of setup, they are referred to herein as **server** (HTTPS) and **local** (HTTP).
+1. The first decision to make is whether your `CiiYUN` instance will use secure (**HTTPS**) or insecure (plain **HTTP**) communications when interacting with clients. While secure communications are obviously desirable, the requirements imposed by the public key cryptographic system underpinning HTTPS add a considerable degree of complexity to the initial setup (we are in the process of eventually simplifying this with [`letsencrypt`](https://letsencrypt.org/)). In contrast, setups using plain HTTP can be suitable in some cases where security threats are unlikely, such as for use strictly within a secure private network. To emphasize the difference between the two types of setup, they are referred to herein as **server** (HTTPS) and **local** (HTTP).
 
-2. Clone this repository, retaining the directory name `kobo-docker`.
+2. Clone this repository, retaining the directory name `CiiYUNr`.
 
 3. [Install Docker Compose for Linux on x86-64](https://docs.docker.com/compose/install/). Power users on Mac OS X and Windows can try [the new Docker beta for those platforms](https://blog.docker.com/2016/03/docker-for-mac-windows-beta/), but there are known issues with filesystem syncing on those platforms.
 
-4. Decide whether you want to create an HTTP-only **local** instance of KoBo Toolbox, or a HTTPS publicly-accessible **server** instance. Local instances will use [`docker-compose.local.yml`](./docker-compose.local.yml) and [`envfile.local.txt`](./envfile.local.txt), whereas server instances will use [`docker-compose.server.yml`](./docker-compose.server.yml) and [`envfile.server.txt`](./envfile.server.txt) instead.  
+4. Decide whether you want to create an HTTP-only **local** instance of CiiYUN, or a HTTPS publicly-accessible **server** instance. Local instances will use [`docker-compose.local.yml`](./docker-compose.local.yml) and [`envfile.local.txt`](./envfile.local.txt), whereas server instances will use [`docker-compose.server.yml`](./docker-compose.server.yml) and [`envfile.server.txt`](./envfile.server.txt) instead.  
 **NOTE:** For server instances, **you are expected to meet the usual basic requirements of serving over HTTPS**. That is, **public (not local-only) DNS records** for the domain and subdomains as specified in [`envfile.server.txt`](./envfile.server.txt), as well as a **CA-signed (not self-signed)** wildcard (or SAN) SSL certificate+key pair valid for those subdomains, and **some basic knowledge of Nginx server administration and the use of SSL**.
 
 5. Based on your desired instance type, create a symlink named `docker-compose.yml` to either [`docker-compose.local.yml`](./docker-compose.local.yml) or [`docker-compose.server.yml`](./docker-compose.server.yml) (e.g. `ln -s docker-compose.local.yml docker-compose.yml`). Alternatively, you can skip this step and explicitly prefix all Docker Compose commands as follows: `docker-compose -f docker-compose.local.yml ...`.
@@ -34,30 +34,30 @@ Once this is noted, you can `docker-compose stop` and search for potentially-mis
 9. **Server-only steps:**
     1. Make a `secrets` directory in the project root and copy the SSL certificate and key files to `secrets/ssl.crt` and `secrets/ssl.key` respectively. **The certificate and key are expected to use exactly these filenames and must comprise either a wildcard or SAN certificate+key pair which are valid for the domain and subdomains specified in [`envfile.server.txt`](./envfile.server.txt).**
 
-    2. If testing on a server that is not publicly accessible at the subdomains you've specified in [`envfile.server.txt`](./envfile.server.txt), put an entry in your host machine's `/etc/hosts` file for each of the three subdomains you entered to reroute such requests to your machine's address (e.g. `192.168.1.123 kf-local.kobotoolbox.org`). Also, uncomment and customize the `extra_hosts` directives in [`docker-compose.server.yml`](./docker-compose.server.yml). This can also be necessary in situations where 
-<!-- 8. Optionally stop and clear previously built `kobo-docker` containers: `docker-compose stop; docker-compose rm`. -->
-<!-- 9. Optionally clear persisted files (e.g. the Postgres database) from previous runs, **taking care that you are in the `kobo-docker` directory**: `sudo rm -rf .vols/ log/`. -->
+    2. If testing on a server that is not publicly accessible at the subdomains you've specified in [`envfile.server.txt`](./envfile.server.txt), put an entry in your host machine's `/etc/hosts` file for each of the three subdomains you entered to reroute such requests to your machine's address (e.g. `192.168.1.123 kf-local.guokc.cn`). Also, uncomment and customize the `extra_hosts` directives in [`docker-compose.server.yml`](./docker-compose.server.yml). This can also be necessary in situations where 
+<!-- 8. Optionally stop and clear previously built `CiiYUN` containers: `docker-compose stop; docker-compose rm`. -->
+<!-- 9. Optionally clear persisted files (e.g. the Postgres database) from previous runs, **taking care that you are in the `CiiYUN` directory**: `sudo rm -rf .vols/ log/`. -->
 
 10. Build any images you've chosen to manually override: `docker-compose build`.
 
 11. Start the server: `docker-compose up -d` (or without the `-d` option to run in the foreground).
 
 11 - Bugfix. # FORM DEPLOYMENT BUG PLEASE BE ADVICED - AS FROM 10/04/2018: (should be removed when fixed)
-If you start the kobo-docker framework the first time you have to set the permission of the media-folder correctly.
+If you start the CiiYUN  framework the first time you have to set the permission of the media-folder correctly.
 otherwise form deployment as well as project creation will fail:
-Please run the following command inside your kobo-docker folder:
-`docker-compose exec kobocat chown -R wsgi /srv/src/kobocat`
+Please run the following command inside your CiiYUN  folder:
+`docker-compose exec CiiYUN  chown -R wsgi /srv/src/kobocat`
 
 12. Container output can be followed with `docker-compose logs -f`. For an individual container, logs can be followed by using the container name from your `docker-compose.yml` with e.g. `docker-compose logs -f enketo_express`.
 
-"Local" setup users can now reach KoBo Toolbox at `http://${HOST_ADDRESS}:${KPI_PUBLIC_PORT}` (substituting in the values entered in [`envfile.local.txt`](./envfile.local.txt)), while "server" setups can be reached at `https://${KOBOFORM_PUBLIC_SUBDOMAIN}.${PUBLIC_DOMAIN_NAME}` (similarly substituting from [`envfile.server.txt`](./envfile.server.txt)). Be sure to periodically update your containers, especially `nginx`, for security updates by pulling new changes from this `kobo-docker` repo then running e.g. `docker-compose pull && docker-compose up -d`.
+"Local" setup users can now reach CiiYUN  at `http://${HOST_ADDRESS}:${KPI_PUBLIC_PORT}` (substituting in the values entered in [`envfile.local.txt`](./envfile.local.txt)), while "server" setups can be reached at `https://${KOBOFORM_PUBLIC_SUBDOMAIN}.${PUBLIC_DOMAIN_NAME}` (similarly substituting from [`envfile.server.txt`](./envfile.server.txt)). Be sure to periodically update your containers, especially `nginx`, for security updates by pulling new changes from this `CiiYUN` repo then running e.g. `docker-compose pull && docker-compose up -d`.
 
 # Backups
-Automatic, periodic backups of KoBoCAT media, MongoDB, and Postgres can be individually enabled by uncommenting (and optionally customizing) the `*_BACKUP_SCHEDULE` variables in your `envfile`. When enabled, timestamped backups will be placed in `backups/kobocat`, `backups/mongo`, and `backups/postgres`, respectively. Redis backups are currently not generated, but the `redis_main` DB file is updated every 5 minutes and can always be found in `.vols/redis_main_data/`.
+Automatic, periodic backups of CiiYUN  media, MongoDB, and Postgres can be individually enabled by uncommenting (and optionally customizing) the `*_BACKUP_SCHEDULE` variables in your `envfile`. When enabled, timestamped backups will be placed in `backups/kobocat`, `backups/mongo`, and `backups/postgres`, respectively. Redis backups are currently not generated, but the `redis_main` DB file is updated every 5 minutes and can always be found in `.vols/redis_main_data/`.
 
-Backups can also be manually triggered when `kobo-docker` is running by executing the the following commands:
+Backups can also be manually triggered when `CiiYUN` is running by executing the the following commands:
 ```
-docker exec -it kobodocker_kobocat_1 /srv/src/kobocat/docker/backup_media.bash
+docker exec -it CiiYUN_kobocat_1 /srv/src/kobocat/docker/backup_media.bash
 docker exec -it kobodocker_mongo_1 /srv/backup_mongo.bash
 docker exec -it kobodocker_postgres_1 /srv/backup_postgres.bash
 ```
@@ -78,4 +78,4 @@ Developers can use [PyDev](http://www.pydev.org/)'s [remote, graphical Python de
 4. Start the PyDev remote debugger server and ensure that no firewall or other settings will prevent the containers from connecting to your debugging machine at the reported port.
 5. Breakpoints can be inserted with e.g. `import pydevd; pydevd.settrace('${DEBUGGING_MACHINE_IP}')`.
 
-Remote debugging in the `kobocat` container can be accomplished in a similar manner.
+Remote debugging in the `CiiYUN` container can be accomplished in a similar manner.
