@@ -1,7 +1,7 @@
 # For public, HTTPS servers.
 
 rabbit:
-  image: kobotoolbox/rabbit:latest
+  image: veibt.com:5000/rabbit:v1
   # Dev: Build the image locally.
   # build: ./base_images/rabbit
   hostname: rabbit
@@ -12,7 +12,7 @@ rabbit:
   restart: on-failure
 
 postgres:
-  image: kobotoolbox/postgres:latest
+  image: veibt.com:5000/postgres:v2
   # Dev: Build the image locally.
   # build: ./base_images/postgres
   hostname: postgres
@@ -25,7 +25,7 @@ postgres:
   restart: on-failure
 
 mongo:
-  image: kobotoolbox/mongo:latest
+  image: veibt.com:5000/mongo:v2
   # Dev: Build the image locally.
   # build: ./base_images/mongo
   hostname: mongo
@@ -42,7 +42,7 @@ mongo:
   restart: on-failure
 
 kobocat:
-  image: kobotoolbox/kobocat:2.019.07
+  image: veibt.com:5000/kobocat:v11
   # Dev: Build the image locally.
   # build: ../kobocat
   hostname: kobocat
@@ -82,11 +82,11 @@ kobocat:
   #   customize with your actual subdomains+domain and server IP. Clients 
   #   might also need similar manipulations to their `hosts` files.
   # extra_hosts:
-  #   - 'ee-local.kobotoolbox.org:172.17.0.1'
+  #   - 'www.ciiyun.com:172.17.0.1'
   #   - 'kf-local.kobotoolbox.org:172.17.0.1'
 
 kpi:
-  image: kobotoolbox/kpi:2.019.08a
+  image: veibt.com:5000/kpi:v17
   # Dev: Build the image locally.
   # build: ../kpi
   hostname: kpi
@@ -105,7 +105,8 @@ kpi:
     - mongo
   volumes:
     - ./.vols/static/kpi:/srv/static
-    - ./.vols/kpi_media:/srv/src/kpi/media
+    - ./backups/kpi:/srv/backups
+    - ./.vols/kpi_media_uploads:/srv/src/kpi/media
     # The Whoosh search index needs persistent storage
     - ./.vols/whoosh:/srv/whoosh
     - ./log/kpi:/srv/logs
@@ -128,11 +129,11 @@ kpi:
   #   customize with your actual subdomains+domain and server IP. Clients 
   #   might also need similar manipulations to their `hosts` files.
   # extra_hosts:
-  #   - 'ee-local.kobotoolbox.org:172.17.0.1'
-  #   - 'kc-local.kobotoolbox.org:172.17.0.1'
+  #   - 'www.ciiyun.com:172.17.0.1'
+  #   - 'www.ciiyun.com:172.17.0.1'
 
 nginx:
-  image: kobotoolbox/nginx:latest
+  image: veibt.com:5000/nginx:v2
   # Dev: Build the image locally.
   # build: ./base_images/nginx
   hostname: nginx
@@ -162,7 +163,7 @@ nginx:
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 enketo_express:
-  image: kobotoolbox/enketo-express-extra-widgets:1.75.3
+  image: veibt.com:5000/enketo_express:v2
   # Dev: Build the image locally.
   # build: ../enketo-express/
   env_file:
@@ -173,6 +174,7 @@ enketo_express:
     - redis_cache
   restart: on-failure
   volumes:
+    - ./.vols/static/enketo_express:/srv/static
     - ./scripts/runtime_variables_enketo_express.source.bash:/etc/profile.d/runtime_variables_enketo_express.source.bash.sh:ro
     - ./enketo_express/config.json:/srv/tmp/enketo_express_config.json:ro
     - ./scripts/enketo_express_copy_config.bash:/etc/my_init.d/01_enketo_express_copy_config.bash:ro
@@ -185,12 +187,12 @@ enketo_express:
   #   customize with your actual subdomains+domain and server IP. Clients 
   #   might also need similar manipulations to their `hosts` files.
   # extra_hosts:
-  #   - 'kf-local.kobotoolbox.org:172.17.0.1'
-  #   - 'kc-local.kobotoolbox.org:172.17.0.1'
+  #   - 'www.ciiyun.com:172.17.0.1'
+  #   - 'www.ciiyun.com:172.17.0.1'
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 redis_main:
-  image: redis:2.6
+  image: veibt.com:5000/redis:v1
   # Map our "main" Redis config into the container.
   volumes:
     - ./redis/redis-enketo-main.conf:/etc/redis/redis.conf:ro
@@ -199,7 +201,7 @@ redis_main:
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 redis_cache:
-  image: redis:2.6
+  image: veibt.com:5000/redis:v1
   # Map our "cache" Redis config into the container.
   volumes:
     - ./redis/redis-enketo-cache.conf:/etc/redis/redis.conf:ro
