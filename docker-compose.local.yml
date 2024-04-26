@@ -1,7 +1,5 @@
-# For public, HTTPS servers.
-
 rabbit:
-  image: veibt.com:5000/rabbit:v1
+  image: veibt.com:5000/rabbit:latest
   # Dev: Build the image locally.
   # build: ./base_images/rabbit
   hostname: rabbit
@@ -12,12 +10,12 @@ rabbit:
   restart: on-failure
 
 postgres:
-  image: veibt.com:5000/postgres:v2
+  image: veibt.com:5000/postgres:latest
   # Dev: Build the image locally.
   # build: ./base_images/postgres
   hostname: postgres
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
   volumes:
     - ./.vols/db:/srv/db
     - ./backups/postgres:/srv/backups
@@ -25,14 +23,14 @@ postgres:
   restart: on-failure
 
 mongo:
-  image: veibt.com:5000/mongo:v2
+  image: veibt.com:5000/mongo:latest
   # Dev: Build the image locally.
   # build: ./base_images/mongo
   hostname: mongo
   environment:
     - MONGO_DATA=/srv/db
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
   # NOTE: On OS X and Windows, comment out the following `volumes` directive 
   #   as a workaround to a VirtualBox folder sharing+Mongo incompatibility.
   #   See the "WARNING" at https://hub.docker.com/_/mongo/
@@ -42,12 +40,12 @@ mongo:
   restart: on-failure
 
 kobocat:
-  image: veibt.com:5000/kobocat:v11
+  image: veibt.com:5000/kobocat:latest
   # Dev: Build the image locally.
   # build: ../kobocat
   hostname: kobocat
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
     - ./envfiles/aws.txt
     - ./envfiles/external_services.txt
     - ./envfiles/kobocat.txt
@@ -69,54 +67,44 @@ kobocat:
     - ./scripts/wait_for_kpi.bash:/etc/my_init.d/04_wait_for_kpi.bash:ro
     - ./scripts/runtime_variables_kobocat.source.bash:/etc/profile.d/runtime_variables_kobocat.source.bash.sh:ro
     # Dev: Use live source directories from the host machine.
-    #- ../kobocat:/srv/src/kobocat
+    # - ../kobocat:/srv/src/kobocat
     #- ../formpack/src/formpack:/usr/local/lib/python2.7/dist-packages/formpack
-    # Dev: Share PyDev remote debugger into container.
+    # Dev: Share PyDev remote debugger source into container.
     #- ~/devel/liclipse/plugins/org.python.pydev_5.4.0.201611281405/pysrc:/srv/pydev_orig:ro
     # Dev: Share your `.transifexrc` into the container.
     # - ./.transifexrc:/root/.transifexrc
   environment:
-    - ENKETO_PROTOCOL=https
+    - ENKETO_PROTOCOL=http
   restart: on-failure
-  # NOTE: Workaround to force name resolution inside containers. If enabled, 
-  #   customize with your actual subdomains+domain and server IP. Clients 
-  #   might also need similar manipulations to their `hosts` files.
-  # extra_hosts:
-  #   - 'www.ciiyun.com:172.17.0.1'
-  #   - 'kf-local.kobotoolbox.org:172.17.0.1'
 
 kpi:
-  image: veibt.com:5000/kpi:v17
+  image: veibt.com:5000/kpi:latest
   # Dev: Build the image locally.
   # build: ../kpi
   hostname: kpi
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
     - ./envfiles/aws.txt
     - ./envfiles/external_services.txt
     - ./envfiles/kpi.txt
     - ./envfiles/nginx.txt
     - ./envfiles/smtp.txt
-  environment:
-    - SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO, https
   links:
     - postgres
     - rabbit
     - mongo
   volumes:
     - ./.vols/static/kpi:/srv/static
-    - ./backups/kpi:/srv/backups
-    - ./.vols/kpi_media_uploads:/srv/src/kpi/media
     # The Whoosh search index needs persistent storage
     - ./.vols/whoosh:/srv/whoosh
     - ./log/kpi:/srv/logs
     - ./scripts/wait_for_rabbit.bash:/etc/my_init.d/01_wait_for_rabbit.bash:ro
     - ./scripts/wait_for_mongo.bash:/etc/my_init.d/02_wait_for_mongo.bash:ro
     - ./scripts/wait_for_postgres.bash:/etc/my_init.d/03_wait_for_postgres.bash:ro
-    - ./scripts/create_kobo_superuser.bash:/etc/my_init.d/20_create_kobo_superuser.bash:ro
+    - ./scripts/create_kobo_superuser.bash://etc/my_init.d/20_create_kobo_superuser.bash:ro
     - ./scripts/runtime_variables_kpi.source.bash:/etc/profile.d/runtime_variables_kpi.source.bash.sh:ro
     # Dev: Use live source directories from the host machine.
-    #- ../kpi:/srv/src/kpi
+    # - ../kpi:/srv/src/kpi
     #- ../formpack/src/formpack:/usr/local/lib/python2.7/dist-packages/formpack
     # Allow access to Kobocat's media uploads within KPI
     - ./.vols/kobocat_media_uploads:/srv/src/kobocat/media
@@ -125,36 +113,31 @@ kpi:
     # Dev: Share your `.transifexrc` into the container.
     # - ./.transifexrc:/root/.transifexrc
   restart: on-failure
-  # NOTE: Workaround to force name resolution inside containers. If enabled, 
-  #   customize with your actual subdomains+domain and server IP. Clients 
-  #   might also need similar manipulations to their `hosts` files.
-  # extra_hosts:
-  #   - 'www.ciiyun.com:172.17.0.1'
-  #   - 'www.ciiyun.com:172.17.0.1'
 
 nginx:
-  image: veibt.com:5000/nginx:v2
+  image: veibt.com:5000/nginx:latest
   # Dev: Build the image locally.
   # build: ./base_images/nginx
   hostname: nginx
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
     - ./envfiles/nginx.txt
     - ./envfiles/kobocat.txt
     - ./envfiles/kpi.txt
   environment:
-    - NGINX_CONFIG_FILE_NAME=nginx_site_https.conf
-    - TEMPLATED_VAR_REFS=$${PUBLIC_DOMAIN_NAME} $${KOBOFORM_PUBLIC_SUBDOMAIN} $${KOBOCAT_PUBLIC_SUBDOMAIN} $${ENKETO_EXPRESS_PUBLIC_SUBDOMAIN}
+    - NGINX_CONFIG_FILE_NAME=nginx_site_http.conf
   ports:
-    - 80:80
-    - 443:443
+    # NOTE: The host ports (left of the ":") must match the values in 
+    #   `envfile.local.txt`. Do not modify the container ports (right side).
+    - 8000:9000 # KPI
+    - 8001:9001 # KoBoCAT
+    - 8005:9005 # Enketo Express
   volumes:
       - ./.vols/static:/srv/www:ro
       # get the logs out of glusterfs!
       - ./log/nginx:/var/log/nginx
       - ./nginx/:/tmp/kobo_nginx/:ro
       - ./nginx/nginx_command.bash:/etc/service/nginx/run:ro
-      - ./secrets/:/tmp/kobo_toolbox_secrets/:ro
   links:
     - kobocat
     - kpi
@@ -163,11 +146,11 @@ nginx:
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 enketo_express:
-  image: veibt.com:5000/enketo_express:v2
+  image: veibt.com:5000/enketo_express:latest
   # Dev: Build the image locally.
   # build: ../enketo-express/
   env_file:
-    - ./envfile.server.txt
+    - ./envfile.local.txt
     - ./envfiles/external_services.txt
   links:
     - redis_main
@@ -183,16 +166,10 @@ enketo_express:
     - ./enketo_express/icon_180x180.png:/srv/src/enketo_express/public/images/icon_180x180.png:ro
     # Dev: Use the live `enketo-express` directory from the host machine.
     # - ../enketo-express:/srv/src/enketo_express
-  # NOTE: Workaround to force name resolution inside containers. If enabled, 
-  #   customize with your actual subdomains+domain and server IP. Clients 
-  #   might also need similar manipulations to their `hosts` files.
-  # extra_hosts:
-  #   - 'www.ciiyun.com:172.17.0.1'
-  #   - 'www.ciiyun.com:172.17.0.1'
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 redis_main:
-  image: veibt.com:5000/redis:v1
+  image: veibt.com:5000/redis:latest
   # Map our "main" Redis config into the container.
   volumes:
     - ./redis/redis-enketo-main.conf:/etc/redis/redis.conf:ro
@@ -201,7 +178,7 @@ redis_main:
 
 # Adapted from https://github.com/kobotoolbox/enketo-express/blob/docker/docker-compose.yml.
 redis_cache:
-  image: veibt.com:5000/redis:v1
+  image: veibt.com:5000/redis:latest
   # Map our "cache" Redis config into the container.
   volumes:
     - ./redis/redis-enketo-cache.conf:/etc/redis/redis.conf:ro
